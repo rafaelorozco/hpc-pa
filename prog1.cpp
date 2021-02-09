@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     for(int i = 0; i < proc_load; i++) {
         double curr_num = drand48();
         printf("%f", curr_num);
-        sum += curr_num;
+        sum += pow(curr_num,2);
     }
     
     printf("My sum is %f\n",sum);
@@ -58,6 +58,8 @@ int main(int argc, char *argv[]) {
         }
 
     }
+
+    sum = sqrt(sum);
 
     if(rank == 0) {
         printf("Final sum is %f\n",sum);
