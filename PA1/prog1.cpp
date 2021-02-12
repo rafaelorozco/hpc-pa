@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     //NOTE! output needs to be three decimal places
     if(rank == 0) {
         //output format #N #p #C #L2 #Time
-        printf("N = %i, P = %i, C = %li, L2 = %.3f\n Time = %f \n",N, p, C, L2, t1-t0);
+        printf("N = %i, P = %i, C = %li, L2 = %.3f\nTime = %f \n",N, p, C, L2, t1-t0);
     }
 
     MPI_Finalize();
