@@ -1,0 +1,10 @@
+# Settings for random number generation
+x-limit=2
+contant-limit=10000
+seed=0
+
+# Output Settings
+show-x=1
+show-y=1
+show-bcast-time=1
+show-poly-eval-time=1
