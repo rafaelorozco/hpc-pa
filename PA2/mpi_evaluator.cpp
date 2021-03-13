@@ -180,5 +180,5 @@ double mpi_poly_evaluator(const double x, const int n, const double* constants, 
                 sum += other_sum;
             }
         }
-        if (rank==0) return sum;
+        return sum;
 }
