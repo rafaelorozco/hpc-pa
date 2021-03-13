@@ -114,15 +114,17 @@ void parallel_prefix(const int n, const double* values, double* prefix_results, 
 
     for(int j = 0; j < log2(p); j++) {
             int conj_rank = rank ^ (1 << j);
+            if (conj_rank < p) {
             MPI_Request req;
             MPI_Irecv(&conj_total, 1, MPI_DOUBLE, conj_rank, 11, MPI_COMM_WORLD, &req);
             MPI_Send(&local_total_end, 1, MPI_DOUBLE, conj_rank, 11, MPI_COMM_WORLD);
             MPI_Wait(&req, &stat);
             local_total_end = (OP == PREFIX_OP_PRODUCT) ? (local_total_end * conj_total) : (local_total_end + conj_total);
             if(rank > conj_rank) local_prefix_end = (OP == PREFIX_OP_PRODUCT) ? (local_prefix_end * conj_total) : (local_prefix_end + conj_total);
+            }
     }
 
-    for (int i=1; i<n; i++){
+    for (int i=0; i<n; i++){
             prefix_results[i] =  (OP == PREFIX_OP_PRODUCT)? (prefix_results[i] * local_prefix_end) : (prefix_results[i] + local_prefix_end);
     }
 
@@ -163,7 +165,7 @@ double mpi_poly_evaluator(const double x, const int n, const double* constants, 
 
         double sum = 0;
         double other_sum;
-        for(int i = 0; i < n; i++) {  
+        for(int i = 0; i < n; i++) {
             sum += constants[i]*local_prefix[i];
         }
 
