@@ -9,7 +9,7 @@
 double poly_evaluator(const double x, const int n, const double* constants){
     //Implementation
 
-	double curr_result = constants[n-1];
+	double curr_result = constants[n];
 	for(int i = n; i > 0; i--) {
 		curr_result = constants[i-1] + x*curr_result;
 	}
