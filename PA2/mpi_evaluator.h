@@ -87,57 +87,7 @@ double broadcast(double value, int source_rank, const MPI_Comm comm);
  *                          (defined in const.h)
  * @param comm              MPI communicator object
  */
-void parallel_prefix(const int n, const double* values, double* prefix_results, const int OP, const MPI_Comm comm){
-
-        int p;
-        int rank;
-        
-        MPI_Comm_size(comm, &p);
-        MPI_Comm_size(comm, &rank);
-
-        int p1;
-        int n1;
-
-        p1 = pow(2,ceil(log2(double(p))));      // in case p is not a power of 2
-        n1 = pow(2,ceil(log2(double(n))));      // in case n is not a power of 2
-        
-        n_loc = n1/p1;                          // number of local elements on each processor
-
-        double local_value[];
-
-        scatter
-        broadcast
-
-        MPI_Barrier(comm);
-
-        // sequential prefix in each processor
-        double local_prefix[];
-        local_prefix[0] = local_value[0]
-        for (int i=1; i<n_loc; i++){
-                local_prefix[i] =  (OP == PREFIX_OP_PRODUCT)? (local_prefix[i-1] * local_value[i]) : (local_prefix[i-1] + local_value[i])
-        }
-        double local_prefix_end = (OP == PREFIX_OP_PRODUCT)? 1 : 0
-        double local_total_end = local_prefix[n_loc-1]
-        double conj_total;
-
-        MPI_Status stat;
-
-        for(int j = 0; j < log2(p1); j++) {
-                conj_rank = rank ^ (1 << j)
-                MPI_Request req;
-                MPI_ISend(&local_total_end, 1, MPI_DOUBLE, conj_rank, 11, MPI_COMM_WORLD, &req);
-                MPI_recv(&conj_total, 1, MPI_DOUBLE, conj_rank, 11, MPI_COMM_WORLD, &req);
-                local_total_end = (OP == PREFIX_OP_PRODUCT) ? (local_total_end * conj_total) : (local_total_end + conj_total)
-                if(rank > conj_rank) {
-                        local_prefix_end = (OP == PREFIX_OP_PRODUCT) ? (local_prefix_end * conj_total) : (local_prefix_end + conj_total)
-                }
-        }
-
-        for (int i=1; i<n_loc; i++){
-                local_prefix[i] =  (OP == PREFIX_OP_PRODUCT)? (local_prefix[i] * local_prefix_end) : (local_prefix[i] + local_prefix_end)
-        }
-        
-}
+void parallel_prefix(const int n, const double* values, double* prefix_results, const int OP, const MPI_Comm comm);
 
 /**
  * 
@@ -153,4 +103,3 @@ void parallel_prefix(const int n, const double* values, double* prefix_results, 
 double mpi_poly_evaluator(const double x, const int n, const double* constants, const MPI_Comm comm);
 
 #endif /* MPI_EVALUATOR_H */
-
