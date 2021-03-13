@@ -37,6 +37,7 @@ void scatter(const int n, double* scatter_values, int &n_local, double* &local_v
         memcpy(local_values, scatter_values, n_local * sizeof(double));
     }
 
+    int prev_start = n_local;
     MPI_Status stat;
     if(rank == source_rank) {
         for(int j = 1; j < p; j++) {
@@ -47,7 +48,8 @@ void scatter(const int n, double* scatter_values, int &n_local, double* &local_v
             //First send the amount of numbers to send. 
             MPI_Send(&n_send, 1, MPI_INT, j, 11, comm);
             //First send the amount of numbers to send. 
-            MPI_Send(&scatter_values[j * n_send], n_send, MPI_DOUBLE, j, 12, comm);
+            MPI_Send(&scatter_values[prev_start], n_send, MPI_DOUBLE, j, 12, comm);
+            prev_start += n_send;
         }
     } else {
         //First rec the amount of numbers to rec. 
@@ -164,9 +166,9 @@ double mpi_poly_evaluator(const double x, const int n, const double* constants, 
         double sum = 0;
         double other_sum;
         for(int i = 0; i < n; i++) {
-            //printf("My rank is %d, constant[%i] = %f \n",rank, i, constants[i]);
             sum += constants[i]*local_prefix[i];
         }
+
         MPI_Status stat;
         for(int j = 0; j < log2(p); j++) {
             int b2_pow_j = 1 << j;
