@@ -1,6 +1,6 @@
 from numpy import random
 
-n = 100000
+n = 10000
 
 file1 = open("sample-constants"+str(n)+".txt","w") 
 
