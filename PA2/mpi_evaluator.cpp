@@ -33,7 +33,7 @@ void scatter(const int n, double* scatter_values, int &n_local, double* &local_v
             num_res--;
         }          
 
-        local_values = (double *) malloc(n*sizeof(double));
+        local_values = (double *) malloc(n_local*sizeof(double));
         memcpy(local_values, scatter_values, n_local * sizeof(double));
     }
 
@@ -56,7 +56,7 @@ void scatter(const int n, double* scatter_values, int &n_local, double* &local_v
         MPI_Recv(&n_local, 1, MPI_INT, source_rank, 11, comm, &stat);
 
         //Allocate the memory
-        local_values = (double *) malloc(n*sizeof(double));
+        local_values = (double *) malloc(n_local*sizeof(double));
         MPI_Recv(local_values, n_local, MPI_DOUBLE, source_rank, 12, comm, &stat);
     }
 }
@@ -156,7 +156,7 @@ double mpi_poly_evaluator(const double x, const int n, const double* constants, 
         for (int i=1; i<n; i++){
                 local_prefix[i] =  local_prefix[i-1] * values[i];
         }
-
+ 
         parallel_prefix(n, values, local_prefix, PREFIX_OP_PRODUCT, comm);
 
         MPI_Barrier(MPI_COMM_WORLD);
@@ -178,5 +178,5 @@ double mpi_poly_evaluator(const double x, const int n, const double* constants, 
                 sum += other_sum;
             }
         }
-        return sum;
+        if (rank==0) return sum;
 }
