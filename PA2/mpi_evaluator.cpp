@@ -105,6 +105,9 @@ void parallel_prefix(const int n, const double* values, double* prefix_results, 
     MPI_Comm_rank(comm, &rank);
     MPI_Barrier(comm);
 
+    int p1;
+    p1 = pow(2,ceil(log2(double(p))));      // in case p is not a power of 2
+
     double local_prefix_end = (OP == PREFIX_OP_PRODUCT)? 1 : 0;
 
     double local_total_end = prefix_results[n-1];
@@ -112,7 +115,7 @@ void parallel_prefix(const int n, const double* values, double* prefix_results, 
 
     MPI_Status stat;
 
-    for(int j = 0; j < log2(p); j++) {
+    for(int j = 0; j < log2(p1); j++) {
             int conj_rank = rank ^ (1 << j);
             if (conj_rank < p) {
             MPI_Request req;
@@ -135,9 +138,6 @@ double mpi_poly_evaluator(const double x, const int n, const double* constants, 
         int p, rank;
         MPI_Comm_size(comm, &p);
         MPI_Comm_rank(comm, &rank);
-
-        int source_rank;
-        MPI_Comm_rank(comm, &source_rank);
 
         int p1;
         int n1=n;
@@ -172,12 +172,14 @@ double mpi_poly_evaluator(const double x, const int n, const double* constants, 
         MPI_Status stat;
         for(int j = 0; j < log2(p); j++) {
             int b2_pow_j = 1 << j;
+            if ((rank ^ b2_pow_j) < p){
             if((rank & b2_pow_j) != 0) {
                 MPI_Send(&sum, 1, MPI_DOUBLE, rank ^ b2_pow_j, 11, MPI_COMM_WORLD);
             }
             else {
                 MPI_Recv(&other_sum,1,MPI_DOUBLE,rank^b2_pow_j,11,MPI_COMM_WORLD,&stat);
                 sum += other_sum;
+            }
             }
         }
         return sum;
