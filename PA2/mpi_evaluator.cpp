@@ -156,7 +156,7 @@ double mpi_poly_evaluator(const double x, const int n, const double* constants, 
         for (int i=1; i<n; i++){
                 local_prefix[i] =  local_prefix[i-1] * values[i];
         }
- 
+
         parallel_prefix(n, values, local_prefix, PREFIX_OP_PRODUCT, comm);
 
         MPI_Barrier(MPI_COMM_WORLD);
@@ -178,5 +178,5 @@ double mpi_poly_evaluator(const double x, const int n, const double* constants, 
                 sum += other_sum;
             }
         }
-        if (rank==0) return sum;
+        return sum;
 }
