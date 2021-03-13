@@ -81,8 +81,7 @@ int main(int argc, char** argv) {
             set_time(t_start, -1, comm);
             double result = poly_evaluator(x[i], n, &global_constants[0]); //eval
             set_time(t_end, -1, comm);
-            poly_evaltime = get_duration(t_start, t_end);                  
-
+            poly_evaltime = get_duration(t_start, t_end);
             print_output(x[i], result, -1, poly_evaltime, 0, 0);            //print result
         }
         //----------------------------------------------------------------//   
