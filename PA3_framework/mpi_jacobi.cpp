@@ -21,6 +21,8 @@
  * TODO: Implement your solutions here
  */
 
+#define NDIM 2
+
 
 void distribute_vector(const int n, double* input_vector, double** local_vector, MPI_Comm comm)
 {
@@ -48,7 +50,78 @@ void transpose_bcast_vector(const int n, double* col_vector, double* row_vector,
 
 void distributed_matrix_vector_mult(const int n, double* local_A, double* local_x, double* local_y, MPI_Comm comm)
 {
-    // TODO
+    int p, rank;
+    int wrank, crank;
+    int my_row_rank;
+    int my_col_rank;
+
+    int coords[NDIM];
+    int free_coords[NDIM];
+
+    MPI_Comm comm1D_row;
+    MPI_Comm comm1D_col;
+
+    MPI_Comm_size(comm, &p);
+    //MPI_Comm_rank(comm, &rank);
+
+    MPI_Comm_rank(comm, &crank);
+    MPI_Cart_coords(comm, crank, NDIM, coords);
+
+   
+    //How many elements from x are here?
+    int msg_size;
+    int q = sqrt(p);
+    if(coords[0] < (n % (int) sqrt(p))){
+        msg_size = ceil(n/q);
+    } else {
+        msg_size = floor(n/q);
+    }
+
+    //make row communicator 
+    free_coords[0] = 0; /* rows */; free_coords[1] = 1; /* cols */
+    MPI_Cart_sub(comm, free_coords, &comm1D_row);
+
+    //make row communicator 
+    free_coords[0] = 1; /* rows */; free_coords[1] = 0; /* cols */
+    MPI_Cart_sub(comm, free_coords, &comm1D_col);
+
+    //get my rank in this row
+    MPI_Comm_rank(comm1D_row, &my_row_rank);
+
+    //get my rank in this col
+    MPI_Comm_rank(comm1D_col, &my_col_rank);
+
+    printf("I'm %d %d and my row rank is %d and my msgsize %d and element \n", coords[0], coords[1], my_row_rank,msg_size);
+
+    // //////Need to tranpose vector onto grid 
+    //1.) (i,0) processors send their local element send to diagonal element. (i,0)
+    MPI_Status stat;
+    if(my_row_rank == 0) {
+        //printf("I'm %d %d", coords[0], coords[1]);
+        //printf("\n ");
+        local_x[0] = 1.;
+        printf("and I am sending to my element %f com rank %d",local_x,coords[0]);
+
+        MPI_Send(&local_x, msg_size, MPI_DOUBLE, coords[0], 11, comm1D_row);
+    }
+    if(my_row_rank == coords[0]) {
+        printf("and I am waiting ");
+        MPI_Recv(&local_x, msg_size, MPI_DOUBLE, 0, 11, comm1D_row, &stat);
+
+        //2.) (i,i) processors send their local element to all others in col communicator. 
+    }
+    if(coords[1] == coords[0]) {
+        MPI_Bcast(&local_x, msg_size, MPI_DOUBLE, coords[0], comm1D_col);
+    }
+    //wait
+    MPI_Barrier(comm);
+
+    printf("I'm %d %d and my row rank is %d and my msgsize %d and element %f \n", coords[0], coords[1], my_row_rank,msg_size, local_x);
+
+
+
+
+    //Do local multiplication using sequential matvec???
 }
 
 // Solves Ax = b using the iterative jacobi method

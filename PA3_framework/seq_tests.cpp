@@ -52,6 +52,32 @@ TEST(SequentialTest, MatrixVectorMult1) {
     // checking if all values are correct (up to some error value)
     for (int i = 0; i < n; ++i)
     {
+        //printf("y at %d is %f \n",i,y[i]);
+        EXPECT_NEAR(expected_y[i], y[i], 1e-10) << " element y[" << i << "] is wrong";
+    }
+}
+
+// test sequential matrix vector multiplication for non squar
+TEST(SequentialTest, MatrixVectorMult2) {
+    // simple 4 by 4 input matrix
+    double A[4*5] = {10., -1., 2., 0., 1., 
+                           -1., 11., -1., 3., 1.,
+                           2., -1., 10., -1., 1.,
+                           0.0, 3., -1., 8., 1.};
+                     
+    double x[5] =  {6., 25., -11., 15., 1.};
+    double y[4];
+    double expected_y[4] = {14.,  326., -137.,  207.};
+    int n = 4;
+    int m = 5;
+
+    // testing sequential matrix multiplication
+    matrix_vector_mult(n, m, &A[0], &x[0], &y[0]);
+
+    // checking if all values are correct (up to some error value)
+    for (int i = 0; i < n; ++i)
+    {
+        //printf("y at %d is %f \n",i,y[i]);
         EXPECT_NEAR(expected_y[i], y[i], 1e-10) << " element y[" << i << "] is wrong";
     }
 }
@@ -69,7 +95,7 @@ TEST(SequentialTest, Jacobi1) {
     int n = 4;
 
     // testing sequential matrix multiplication
-    jacobi(n, A, b, x);
+    jacobi(n, A, b, x, 500, 1e-10);
 
     // checking if all values are correct (up to some error value)
     for (int i = 0; i < n; ++i)
