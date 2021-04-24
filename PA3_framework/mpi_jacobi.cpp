@@ -26,6 +26,7 @@
 
 #include <iostream>
 #include <string>
+#include <string.h>
 #include <iterator>
 
 using std::cout; using std::cin;
