@@ -322,7 +322,7 @@ void distributed_matrix_vector_mult(const int n, double* local_A, double* local_
 
 
     //Do local multiplication using sequential matvec???
-    matrix_vector_mult(n, &A[0], &x[0], &y[0]);
+    //matrix_vector_mult(n, &local_A[0], &local_x[0], &local_y[0]);
 
 }
 
