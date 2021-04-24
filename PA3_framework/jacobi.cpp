@@ -53,8 +53,10 @@ double vector_l2(const int n, double* y)
 void jacobi(const int n, double* A, double* b, double* x, int max_iter, double l2_termination)
 {
 	//make R and inv(D)
-	double R[n*n] = {0};
-	double D_inv[n*n] = {0};
+	double R[n*n];
+	//double R[n*n] = {0};
+	//double D_inv[n*n] = {0};
+	double D_inv[n*n];
 	for(int i = 0; i < n; i++) {
 		for(int j = 0; j < n; j++) {
 			if(i != j){
@@ -76,8 +78,11 @@ void jacobi(const int n, double* A, double* b, double* x, int max_iter, double l
 
 	//initialize x
     //x = {0};
-    double temp[n] = {0};
-    double res[n] = {0};
+    //double temp[n] = {0};
+    //double res[n] = {0};
+	double temp[n];
+	double res[n];
+
     for(int i = 0; i < n; i++) {
     	x[i] = 0;
    	}

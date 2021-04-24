@@ -29,13 +29,13 @@ void distribute_vector(const int n, double* input_vector, double** local_vector,
     // TODO
 
     int dims[2], periods[2], coords[2];
-    MPI_Cart_get(comm, 2, dims, periods, coords)
+    MPI_Cart_get(comm, 2, dims, periods, coords);
 
     MPI_Comm col_comm;
     int keepdims[2] = {1, 0};
     MPI_Cart_sub(comm, keepdims, &col_comm);
 
-    coords[1] && return;
+    if (coords[1] == 0) return;
     
     int* count = new int[dims[0]];
     int* displs = new int[dims[0]];
@@ -54,7 +54,7 @@ void distribute_vector(const int n, double* input_vector, double** local_vector,
 
     int root_rank;
     int root_coords[] = {0};
-    MPI_Cart_rank(comm_col, root_coords, &root_rank);
+    MPI_Cart_rank(col_comm, root_coords, &root_rank);
 
     MPI_Scatterv(input_vector, count, displs, MPI_DOUBLE, *local_vector, local_size, MPI_DOUBLE, root_rank, col_comm);
 
@@ -71,13 +71,13 @@ void gather_vector(const int n, double* local_vector, double* output_vector, MPI
     // TODO
 
     int dims[2], periods[2], coords[2];
-    MPI_Cart_get(comm, 2, dims, periods, coords)
+    MPI_Cart_get(comm, 2, dims, periods, coords);
 
     MPI_Comm col_comm;
     int keepdims[2] = {1, 0};
     MPI_Cart_sub(comm, keepdims, &col_comm);
 
-    coords[1] && return;
+    if (coords[1] == 0) return;
 
 
     int* count = new int[dims[0]];
@@ -96,11 +96,11 @@ void gather_vector(const int n, double* local_vector, double* output_vector, MPI
 
     int root_rank;
     int root_coords[] = {0};
-    MPI_Cart_rank(comm_col, root_coords, &root_rank);
+    MPI_Cart_rank(col_comm, root_coords, &root_rank);
 
-    MPI_Gatherv(local_vector, local_size, MPI_DOUBLE, output_vector, recvcounts, displs, MPI_DOUBLE, root_rank, col_comm);
+    MPI_Gatherv(local_vector, local_size, MPI_DOUBLE, output_vector, count, displs, MPI_DOUBLE, root_rank, col_comm);
 
-    delete [] recvcounts;
+    delete [] count;
     delete [] displs;
 
     return;
@@ -123,7 +123,7 @@ void distribute_matrix(const int n, double* input_matrix, double** local_matrix,
     // Create a temp matrix to store the values in the first column
     double* temp = NULL;
 
-    coords[1] && return;
+    if (coords[1] == 0) return;
 
     // Compute the number of elements to send to each processor
     int* count = new int[dims[0]];
@@ -144,7 +144,7 @@ void distribute_matrix(const int n, double* input_matrix, double** local_matrix,
     // Get the rank of root in the first column communicator
     int root_rank;
     int root_coords[] = {0};
-    MPI_Cart_rank(comm_col, root_coords, &root_rank);
+    MPI_Cart_rank(col_comm, root_coords, &root_rank);
 
     // Scatter values to different processors
     MPI_Scatterv(input_matrix, count, displs, MPI_DOUBLE, temp, local_size, MPI_DOUBLE, root_rank, col_comm);
@@ -159,8 +159,6 @@ void distribute_matrix(const int n, double* input_matrix, double** local_matrix,
     int num_col = block_decompose(n, dims[1], coords[1]);
 
     // Compute the number of elements to send to each processor
-    int* count = new int[dims[1]];
-    int* displs = new int[dims[1]];
 
     for (int i = 0; i < dims[1]; i++) {
         count[i] = block_decompose(n, dims[1], i);
@@ -172,12 +170,10 @@ void distribute_matrix(const int n, double* input_matrix, double** local_matrix,
     }
 
     // Allocate spaces for local matrix
-    (*local_matrix) = new double[nrows * ncols];
+    (*local_matrix) = new double[num_row * num_col];
 
     // Get the rank of root in the first column
-    int root_rank;
-    int root_coords[] = {0};
-    MPI_Cart_rank(comm_row, root_coords, &root_rank);
+    MPI_Cart_rank(row_comm, root_coords, &root_rank);
 
     for (int i = 0; i < num_row; i++) {
         MPI_Scatterv((temp + i * n), count, displs, MPI_DOUBLE, (*local_matrix + i * num_col), num_col, MPI_DOUBLE, root_rank, row_comm);
@@ -222,15 +218,15 @@ void transpose_bcast_vector(const int n, double* col_vector, double* row_vector,
         memcpy (row_vector, col_vector, count*sizeof(double));
     } else if(col_rank == 0) {
         int scount = block_decompose(n, q, row_rank);
-        MPI_Send(col_vector, scount, MPI_DOUBLE, row_rank, 0, comm_row);
+        MPI_Send(col_vector, scount, MPI_DOUBLE, row_rank, 0, row_comm);
     } else if(row_rank == col_rank) {
         int rcount = block_decompose(n, q, row_rank);
-        MPI_Recv(row_vector, rcount, MPI_DOUBLE, 0, 0, comm_row, MPI_STATUS_IGNORE);
+        MPI_Recv(row_vector, rcount, MPI_DOUBLE, 0, 0, row_comm, MPI_STATUS_IGNORE);
     }
 
     //broadcast the vector within the column
     int bcount = block_decompose(n, q, col_rank);
-    MPI_Bcast(row_vector, bcount, MPI_DOUBLE, col_rank, comm_col);
+    MPI_Bcast(row_vector, bcount, MPI_DOUBLE, col_rank, col_comm);
 
 }
 
