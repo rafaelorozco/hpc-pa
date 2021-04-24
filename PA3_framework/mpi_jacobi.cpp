@@ -16,6 +16,7 @@
 #include <assert.h>
 #include <math.h>
 #include <vector>
+#include <cstring>
 
 /*
  * TODO: Implement your solutions here
