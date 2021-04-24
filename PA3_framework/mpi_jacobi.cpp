@@ -23,6 +23,12 @@
 
 #define NDIM 2
 
+#include <iostream>
+#include <string>
+#include <iterator>
+
+using std::cout; using std::cin;
+using std::endl; using std::string;
 
 void distribute_vector(const int n, double* input_vector, double** local_vector, MPI_Comm comm)
 {
@@ -255,8 +261,10 @@ void distributed_matrix_vector_mult(const int n, double* local_A, double* local_
     int msg_size;
     int q = sqrt(p);
     if(coords[0] < (n % (int) sqrt(p))){
+        std::cout << q << " ";
         msg_size = ceil(n/q);
     } else {
+        std::cout << q << " ";
         msg_size = floor(n/q);
     }
 
