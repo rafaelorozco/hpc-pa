@@ -304,8 +304,6 @@ void distributed_matrix_vector_mult(const int n, double* local_A, double* local_
         }
         if(my_row_rank == coords[0]) {
             printf("I'm waiting and I am %d %d and my row rank is %d  \n", coords[0], coords[1], my_row_rank);
-
-    
             fflush(stdout);
             MPI_Recv(local_x, msg_size, MPI_DOUBLE, 0, 11, comm1D_row, &stat);
             printf("I got element %f\n", local_x[0]);
@@ -318,11 +316,8 @@ void distributed_matrix_vector_mult(const int n, double* local_A, double* local_
     //wait
     MPI_Barrier(comm);
 
-    //printf("I'm %d %d and my row rank is %d and my msgsize %d and element %f \n", coords[0], coords[1], my_row_rank,msg_size, local_x);
-
-
     //Do local multiplication using sequential matvec???
-    matrix_vector_mult(n, &A[0], &x[0], &y[0]);
+    matrix_vector_mult(n, &local_A[0], &local_x[0], &local_y[0]);
 
 }
 
@@ -346,7 +341,7 @@ void mpi_matrix_vector_mult(const int n, double* A,
 
     // allocate local result space
     double* local_y = new double[block_decompose_by_dim(n, comm, 0)];
-    distributed_matrix_vector_mult(n, local_A, local_x, local_y, comm);
+    //distributed_matrix_vector_mult(n, local_A, local_x, local_y, comm);
 
     // gather results back to rank 0
     gather_vector(n, local_y, y, comm);

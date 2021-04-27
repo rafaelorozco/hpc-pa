@@ -53,11 +53,11 @@ double vector_l2(const int n, double* y)
 void jacobi(const int n, double* A, double* b, double* x, int max_iter, double l2_termination)
 {
 	//make R and inv(D)
-	double R[n*n];
-	//double R[n*n] = {0};
-	//double D_inv[n*n] = {0};
-	double D_inv[n*n];
-	for(int i = 0; i < n; i++) {
+        double R[n*n] = {0};
+	double D_inv[n*n] = {0};
+	//double D_inv[n*n];
+	//double R[n*n];
+    for(int i = 0; i < n; i++) {
 		for(int j = 0; j < n; j++) {
 			if(i != j){
 				R[i*n + j] = A[i*n + j];
@@ -67,81 +67,32 @@ void jacobi(const int n, double* A, double* b, double* x, int max_iter, double l
 		}
     }
 
-    for(int i = 0; i < n; i++) {
-		for(int j = 0; j < n; j++) {
-			printf("%f ",D_inv[i*n + j]);
-			
-		}
-		printf("\n ");
-    }
-
-
-	//initialize x
-    //x = {0};
-    //double temp[n] = {0};
-    //double res[n] = {0};
-	double temp[n];
-	double res[n];
+//    for(int i = 0; i < n; i++) {
+//	for(int j = 0; j < n; j++) {
+//	    printf("%f ",D_inv[i*n + j]);
+//	}
+//	printf("\n ");
+//   }
+   
+    //initialize x
+    double temp[n] = {0};
+    double res[n] = {0};
+	//double temp[n];
+	//double res[n];
 
     for(int i = 0; i < n; i++) {
     	x[i] = 0;
-   	}
-
-    //for(int i = 0; i < n; i++) {
-    //	printf("%f ", x[i]);
-   	//}
-	printf("\n");
-   	//for(int i = 0; i < n; i++) {
-    //	printf("%f ", temp[i]);
-   	//}
-
-
-
-
-    //matrix_vector_mult(n, &D_inv[0], &temp[0], &x[0]);
-    double res_norm;
-
+    }
 
     for(int j = 0; j < n; j++) res[j] = -b[j];
 
-    printf("iniital resnorm %f",vector_l2(n, res));
-printf("ls teerm %f",l2_termination);
-
-    while (vector_l2(n, res) > l2_termination) {
-    //for(int i = 0; i < 50; i++) {
-    	//temp = Rx
-    	matrix_vector_mult(n, &R[0], &x[0], &temp[0]);
-
-    	//temp = b - temp
-    	// for(int i = 0; i < n; i++) {
-    	// 	printf("%f ", temp[i]);
-   		// }
-   		// printf("\n");
-   		// for(int i = 0; i < n; i++) {
-    	// 	printf("%f ", b[i]);
-   		// }
-   		// printf("\n");
+    int curr_iter = 0; 
+    while (vector_l2(n, res) > (l2_termination/100000000) && curr_iter < max_iter) {
+	matrix_vector_mult(n, &R[0], &x[0], &temp[0]);
     	for(int j = 0; j < n; j++) temp[j] = b[j] - temp[j];
-    	// for(int i = 0; i < n; i++) {
-    	// 	printf("%f ", temp[i]);
-   		// }
-   		// printf("\n");
-
-    	//x = inv(D)*temp
-
-    	matrix_vector_mult(n, &D_inv[0], &temp[0], &x[0]);
-    	// printf("x\n");
-    	// for(int i = 0; i < n; i++) {
-    	// 	printf("%f ", x[i]);
-   		// }
-   		// printf("\n");
-
-   		//check residual
-   		matrix_vector_mult(n, &A[0], &x[0], &temp[0]);
-
-   		for(int j = 0; j < n; j++) res[j] = b[j] - temp[j];
-   		res_norm = vector_l2(n, res);
-   		// printf("resnorm: %f\n",res_norm);
+	matrix_vector_mult(n, &D_inv[0], &temp[0], &x[0]);
+   	matrix_vector_mult(n, &A[0], &x[0], &temp[0]);
+   	for(int j = 0; j < n; j++) res[j] = b[j] - temp[j];
+	curr_iter++;
     }
-
 }
