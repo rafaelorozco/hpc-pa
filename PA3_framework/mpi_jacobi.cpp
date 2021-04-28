@@ -217,9 +217,9 @@ void transpose_bcast_vector(const int n, double* col_vector, double* row_vector,
 
     //get row and column subcommunicators
     MPI_Comm col_comm, row_comm;
-    int keepdims[2] = {true, false};
+    int keepdims[2] = {1, 0};
     MPI_Cart_sub(comm, keepdims, &col_comm);
-    keepdims[0] = false; keepdims[1] = true;
+    keepdims[0] = 0; keepdims[1] = 1;
     MPI_Cart_sub(comm, keepdims, &row_comm);
 
     //get rank in the column and in the row
