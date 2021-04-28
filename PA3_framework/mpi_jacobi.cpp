@@ -338,47 +338,47 @@ void distributed_jacobi(const int n, double* local_A, double* local_b, double* l
     MPI_Cart_get(comm, 2, dims, periods, coords);
 
     // Compute the dimentions of local matrix
-    int nrows = block_decompose(n, dims[0], coords[0]);
-    int ncols = block_decompose(n, dims[1], coords[1]);
+    int num_row = block_decompose(n, dims[0], coords[0]);
+    int num_col = block_decompose(n, dims[1], coords[1]);
 
     // Create row and column communicators
-    MPI_Comm comm_col;
-    int remain_dims[2] = {true, false};
-    MPI_Cart_sub(comm, remain_dims, &comm_col);
+    MPI_Comm col_comm;
+    int keepdims[2] = {1, 0};
+    MPI_Cart_sub(comm, keepdims, &col_comm);
 
-    MPI_Comm comm_row;
-    remain_dims[0] = false; remain_dims[1] = true;
-    MPI_Cart_sub(comm, remain_dims, &comm_row);
+    MPI_Comm row_comm;
+    keepdims[0] = 0; keepdims[1] = 1;
+    MPI_Cart_sub(comm, keepdims, &row_comm);
 
     // Compute the diagonal elements and matrix R = A - D
-    double* local_D = new double[nrows];
-    double* local_R = new double[nrows * ncols];
+    double* local_D = new double[num_row];
+    double* local_R = new double[num_row * num_col];
     if (coords[0] == coords[1]) {
-        std::copy(local_A, local_A + nrows * ncols, local_R);
-        for (int i = 0; i < nrows; i++) {
-            local_D[i] = local_A[i * (ncols + 1)];
-            local_R[i * (ncols + 1)] = 0;
+        std::copy(local_A, local_A + num_row * num_col, local_R);
+        for (int i = 0; i < num_row; i++) {
+            local_D[i] = local_A[i * (num_col + 1)];
+            local_R[i * (num_col + 1)] = 0;
         }
         if (coords[0] != 0) {
             int dest_rank;
             int dest_coords[] = {0};
-            MPI_Cart_rank(comm_row, dest_coords, &dest_rank);
-            MPI_Send(local_D, nrows, MPI_DOUBLE, dest_rank, 0, comm_row);
+            MPI_Cart_rank(row_comm, dest_coords, &dest_rank);
+            MPI_Send(local_D, num_row, MPI_DOUBLE, dest_rank, 0, row_comm);
         }
     } else {
-        std::copy(local_A, local_A + nrows * ncols, local_R);
+        std::copy(local_A, local_A + num_row * num_col, local_R);
     }
 
     if (coords[1] == 0 && coords[0] != 0) {
         int source_rank;
         int source_coords[] = {coords[0]};
-        MPI_Cart_rank(comm_row, source_coords, &source_rank);
-        MPI_Recv(local_D, nrows, MPI_DOUBLE, source_rank, 0, comm_row, MPI_STATUS_IGNORE);
+        MPI_Cart_rank(row_comm, source_coords, &source_rank);
+        MPI_Recv(local_D, num_row, MPI_DOUBLE, source_rank, 0, num_row, MPI_STATUS_IGNORE);
     }
 
     // Initialize x to zero
     if (coords[1] == 0) {
-        for (int i = 0; i < nrows; i++) local_x[i] = 0;
+        for (int i = 0; i < num_row; i++) local_x[i] = 0;
     }
 
     double l2_norm_total;
@@ -386,12 +386,12 @@ void distributed_jacobi(const int n, double* local_A, double* local_b, double* l
     int iter = 1;
     while (iter <= max_iter) {
 
-        double* local_y = new double[nrows];
+        double* local_y = new double[num_row];
 
         distributed_matrix_vector_mult(n, local_R, local_x, local_y, comm);
 
         if (coords[1] == 0) {
-            for (int i = 0; i < nrows; i++) {
+            for (int i = 0; i < num_row; i++) {
                 local_x[i] = (local_b[i] - local_y[i]) / local_D[i];
             }
         }
@@ -400,10 +400,10 @@ void distributed_jacobi(const int n, double* local_A, double* local_b, double* l
 
         if (coords[1] == 0) {
             double l2_norm = 0.0;
-            for (int i = 0; i < nrows; i++) {
+            for (int i = 0; i < num_row; i++) {
                 l2_norm += (local_b[i] - local_y[i]) * (local_b[i] - local_y[i]);
             }
-            MPI_Allreduce(&l2_norm, &l2_norm_total, 1, MPI_DOUBLE, MPI_SUM, comm_col);
+            MPI_Allreduce(&l2_norm, &l2_norm_total, 1, MPI_DOUBLE, MPI_SUM, col_comm);
         }
 
         delete [] local_y;
@@ -412,8 +412,8 @@ void distributed_jacobi(const int n, double* local_A, double* local_b, double* l
 
         int root_rank;
         int root_coords[] = {0};
-        MPI_Cart_rank(comm_row, root_coords, &root_rank);
-        MPI_Bcast(&l2_norm_total, 1, MPI_DOUBLE, root_rank, comm_row);
+        MPI_Cart_rank(row_comm, root_coords, &root_rank);
+        MPI_Bcast(&l2_norm_total, 1, MPI_DOUBLE, root_rank, row_comm);
 
         if (l2_norm_total <= l2_termination) {
             return;
@@ -421,10 +421,6 @@ void distributed_jacobi(const int n, double* local_A, double* local_b, double* l
 
         iter++;
     }
-
-    // // Free the column communicator
-    // MPI_Comm_free(&comm_col);
-    // MPI_Comm_free(&comm_row);
 
     delete [] local_D;
     delete [] local_R;
