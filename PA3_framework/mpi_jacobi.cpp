@@ -43,7 +43,7 @@ void distribute_vector(const int n, double* input_vector, double** local_vector,
     int keepdims[2] = {1, 0};
     MPI_Cart_sub(comm, keepdims, &col_comm);
 
-    if (coords[1] == 0) return;
+    if (coords[1] != 0) return;
     
     int* count = new int[dims[0]];
     int* displs = new int[dims[0]];
@@ -85,7 +85,7 @@ void gather_vector(const int n, double* local_vector, double* output_vector, MPI
     int keepdims[2] = {1, 0};
     MPI_Cart_sub(comm, keepdims, &col_comm);
 
-    if (coords[1] == 0) return;
+    if (coords[1] != 0) return;
 
 
     int* count = new int[dims[0]];
@@ -131,7 +131,7 @@ void distribute_matrix(const int n, double* input_matrix, double** local_matrix,
     // Create a temp matrix to store the values in the first column
     double* temp = NULL;
 
-    if (coords[1] == 0) return;
+    if (coords[1] != 0) return;
 
     // Compute the number of elements to send to each processor
     int* count = new int[dims[0]];
