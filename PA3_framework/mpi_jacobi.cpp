@@ -121,6 +121,8 @@ void distribute_matrix(const int n, double* input_matrix, double** local_matrix,
 
     int dims[2], periods[2], coords[2];
     MPI_Cart_get(comm, 2, dims, periods, coords);
+    int root_rank;
+    int root_coords[] = {0};
 
     // Step 1. Distribute rows on processors in the first column
     // Create column communicators 
@@ -131,7 +133,7 @@ void distribute_matrix(const int n, double* input_matrix, double** local_matrix,
     // Create a temp matrix to store the values in the first column
     double* temp = NULL;
 
-    if (coords[1] != 0) return;
+    if (coords[1] == 0){
 
     // Compute the number of elements to send to each processor
     int* count = new int[dims[0]];
@@ -150,18 +152,24 @@ void distribute_matrix(const int n, double* input_matrix, double** local_matrix,
     temp = new double[local_size];
 
     // Get the rank of root in the first column communicator
-    int root_rank;
-    int root_coords[] = {0};
     MPI_Cart_rank(col_comm, root_coords, &root_rank);
 
     // Scatter values to different processors
     MPI_Scatterv(input_matrix, count, displs, MPI_DOUBLE, temp, local_size, MPI_DOUBLE, root_rank, col_comm);
+
+    delete [] count;
+    delete [] displs;
+    }
 
     // Step 2. Distribute submatrix on processors among each row
     // Create row communicators 
     MPI_Comm row_comm;
     keepdims[0] = 0; keepdims[1] = 1;
     MPI_Cart_sub(comm, keepdims, &row_comm);
+
+    int* count = new int[dims[1]];
+    int* displs = new int[dims[1]];
+
 
     int num_row = block_decompose(n, dims[0], coords[0]);
     int num_col = block_decompose(n, dims[1], coords[1]);
