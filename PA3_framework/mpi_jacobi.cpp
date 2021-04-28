@@ -265,17 +265,13 @@ void distributed_matrix_vector_mult(const int n, double* local_A, double* local_
 
     MPI_Comm_rank(comm, &crank);
     MPI_Cart_coords(comm, crank, NDIM, coords);
-
    
     //How many elements from x are here?
     int msg_size;
     int q = sqrt(p);
-    //printf("q %d",q);
     if(coords[0] < (n % (int) sqrt(p))){
-        std::cout << q << " ";
         msg_size = ceil(n/q);
     } else {
-        std::cout << q << " ";
         msg_size = floor(n/q);
     }
 
@@ -292,41 +288,37 @@ void distributed_matrix_vector_mult(const int n, double* local_A, double* local_
 
     //get my rank in this col
     MPI_Comm_rank(comm1D_col, &my_col_rank);
-    local_x[0] = 1;
-    //printf("element %f",local_x[0]);
-    fflush(stdout);
-    //printf("I'm %d %d and my row rank is %d and my msgsize %d and element \n", coords[0], coords[1], my_row_rank,msg_size);
-
+  
     // //////Need to tranpose vector onto grid 
     //1.) (i,0) processors send their local element send to diagonal element. (i,0)
     MPI_Status stat;
     if(coords[0] != 0) {
         if(my_row_rank == 0) {
-            //printf("I'm %d %d", coords[0], coords[1]);
-            //printf("\n ");
-            //local_x[0] = 1;
-            printf("and I am sending to my element %f com rank %d\n",local_x[0],coords[0]);
-            fflush(stdout);
-
             MPI_Send(local_x, msg_size, MPI_DOUBLE, coords[0], 11, comm1D_row);
-        }
-        if(my_row_rank == coords[0]) {
-            printf("I'm waiting and I am %d %d and my row rank is %d  \n", coords[0], coords[1], my_row_rank);
-            fflush(stdout);
+       }
+        if(my_row_rank == coords[0]) { //this is a diagonal processor
+	    (local_x) = new double[msg_size];
             MPI_Recv(local_x, msg_size, MPI_DOUBLE, 0, 11, comm1D_row, &stat);
-            printf("I got element %f\n", local_x[0]);
-            //2.) (i,i) processors send their local element to all others in col communicator. 
+	    fflush(stdout);
         }
-    }
-    if(coords[1] == coords[0]) {
-        MPI_Bcast(&local_x, msg_size, MPI_DOUBLE, coords[0], comm1D_col);
-    }
-    //wait
+   }
+ 
+    if(coords[0] != coords[1]) {
+ 	(local_x) = new double[msg_size];
+    }  
+    MPI_Bcast(local_x, msg_size, MPI_DOUBLE, coords[1], comm1D_col);
     MPI_Barrier(comm);
-
     //Do local multiplication using sequential matvec???
-    matrix_vector_mult(n, &local_A[0], &local_x[0], &local_y[0]);
+    matrix_vector_mult(n, local_A, local_x, local_y);
+    double *global_reduce = new double[msg_size];
+        
+    //printf("I am %d %d the result from my matvec is %f\n",coords[0], coords[1],local_y[0]);
+    MPI_Reduce(local_y, global_reduce, msg_size, MPI_DOUBLE, MPI_SUM, 0, comm1D_row);
+    //printf("I am %d %d the result from my reduce is %f\n",coords[0], coords[1], global_reduce[0]);
 
+    if(coords[1] == 0) {
+         memcpy (local_y, global_reduce, msg_size*sizeof(double));
+    }
 }
 
 // Solves Ax = b using the iterative jacobi method
@@ -373,7 +365,7 @@ void distributed_jacobi(const int n, double* local_A, double* local_b, double* l
         int source_rank;
         int source_coords[] = {coords[0]};
         MPI_Cart_rank(row_comm, source_coords, &source_rank);
-        MPI_Recv(local_D, num_row, MPI_DOUBLE, source_rank, 0, num_row, MPI_STATUS_IGNORE);
+        MPI_Recv(local_D, num_row, MPI_DOUBLE, source_rank, 0, row_comm, MPI_STATUS_IGNORE);
     }
 
     // Initialize x to zero
@@ -439,6 +431,8 @@ void mpi_matrix_vector_mult(const int n, double* A,
     // allocate local result space
     double* local_y = new double[block_decompose_by_dim(n, comm, 0)];
     distributed_matrix_vector_mult(n, local_A, local_x, local_y, comm);
+
+
 
     // gather results back to rank 0
     gather_vector(n, local_y, y, comm);
