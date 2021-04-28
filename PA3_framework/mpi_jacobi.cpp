@@ -114,7 +114,6 @@ void gather_vector(const int n, double* local_vector, double* output_vector, MPI
     return;
 }
 
-// gather the local vector distributed among (i,0) to the processor (0,0)
 
 void distribute_matrix(const int n, double* input_matrix, double** local_matrix, MPI_Comm comm)
 {
@@ -204,10 +203,10 @@ void distribute_matrix(const int n, double* input_matrix, double** local_matrix,
 }
 
 
-
-void transpose_bcast_vector(const int n, double* col_vector, double* row_vector, MPI_Comm comm) {
-
-    //get the rank original rank
+void transpose_bcast_vector(const int n, double* col_vector, double* row_vector, MPI_Comm comm)
+{
+    // TODO
+    
     int rank;
     MPI_Comm_rank(comm, &rank);
     
@@ -217,11 +216,11 @@ void transpose_bcast_vector(const int n, double* col_vector, double* row_vector,
     q = (int)sqrt(p);
 
     //get row and column subcommunicators
-    MPI_Comm comm_row, comm_col;
-    int remain_dims[2] = {true, false};
-    MPI_Cart_sub(comm, remain_dims, &comm_col);
-    remain_dims[0] = false; remain_dims[1] = true;
-    MPI_Cart_sub(comm, remain_dims, &comm_row);
+    MPI_Comm col_comm, row_comm;
+    int keepdims[2] = {true, false};
+    MPI_Cart_sub(comm, keepdims, &col_comm);
+    keepdims[0] = false; keepdims[1] = true;
+    MPI_Cart_sub(comm, keepdims, &row_comm);
 
     //get rank in the column and in the row
     int col_rank, row_rank;
@@ -235,15 +234,15 @@ void transpose_bcast_vector(const int n, double* col_vector, double* row_vector,
         memcpy (row_vector, col_vector, count*sizeof(double));
     } else if(col_rank == 0) {
         int scount = block_decompose(n, q, row_rank);
-        MPI_Send(col_vector, scount, MPI_DOUBLE, row_rank, 0, comm_row);
+        MPI_Send(col_vector, scount, MPI_DOUBLE, row_rank, 0, row_comm);
     } else if(row_rank == col_rank) {
         int rcount = block_decompose(n, q, row_rank);
-        MPI_Recv(row_vector, rcount, MPI_DOUBLE, 0, 0, comm_row, MPI_STATUS_IGNORE);
+        MPI_Recv(row_vector, rcount, MPI_DOUBLE, 0, 0, row_comm, MPI_STATUS_IGNORE);
     }
 
     //broadcast the vector within the column
     int bcount = block_decompose(n, q, col_rank);
-    MPI_Bcast(row_vector, bcount, MPI_DOUBLE, col_rank, comm_col);
+    MPI_Bcast(row_vector, bcount, MPI_DOUBLE, col_rank, col_comm);
 
 }
 
