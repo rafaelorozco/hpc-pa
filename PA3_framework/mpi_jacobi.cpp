@@ -16,8 +16,21 @@
 #include <assert.h>
 #include <math.h>
 #include <vector>
+#include <cstring>
+
+/*
+ * TODO: Implement your solutions here
+ */
+
+#define NDIM 2
+
 #include <iostream>
-#include <algorithm>
+#include <string>
+#include <string.h>
+#include <iterator>
+
+using std::cout; using std::cin;
+using std::endl; using std::string;
 
 /*
  * TODO: Implement your solutions here
