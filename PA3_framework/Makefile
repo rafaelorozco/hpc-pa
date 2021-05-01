@@ -2,7 +2,7 @@
 CXX=mpic++
 #CCFLAGS=-Wall -g
 # activate for compiler optimizations:
-CCFLAGS=-Wall -O3
+CCFLAGS=-Wall -O3 -g
 LDFLAGS=-lpthread
 
 # set up google test

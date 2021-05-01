@@ -42,7 +42,7 @@ void matrix_vector_mult(const int n, const int m, const double* A, const double*
 
 double vector_l2(const int n, double* y)
 {
-	double sum = 0;
+    double sum = 0;
     for(int i = 0; i < n; i++) {
     	sum += pow(y[i], 2.);
     }
@@ -53,11 +53,18 @@ double vector_l2(const int n, double* y)
 void jacobi(const int n, double* A, double* b, double* x, int max_iter, double l2_termination)
 {
 	//make R and inv(D)
-        double R[n*n] = {0};
-	double D_inv[n*n] = {0};
+        //double R[n*n] = {0};
+  
+        double* R = new double[n*n];
+
+
+	//double D_inv[n*n] = {0};
+
+        double* D_inv = new double[n*n];
+
 	//double D_inv[n*n];
 	//double R[n*n];
-    for(int i = 0; i < n; i++) {
+	for(int i = 0; i < n; i++) {
 		for(int j = 0; j < n; j++) {
 			if(i != j){
 				R[i*n + j] = A[i*n + j];
@@ -65,7 +72,7 @@ void jacobi(const int n, double* A, double* b, double* x, int max_iter, double l
 				D_inv[i*n + j] = 1. / A[i*n + j];
 			}
 		}
-    }
+	 }
 
 //    for(int i = 0; i < n; i++) {
 //	for(int j = 0; j < n; j++) {

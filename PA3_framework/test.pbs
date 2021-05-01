@@ -1,0 +1,15 @@
+
+
+#PBS -N helloraf
+#PBS -l nodes=2:ppn=32
+#PBS -l walltime=00:15:00
+#PBS -q coc-ice-multi
+#PBS -o hello.out
+#PBS -e hello.err
+#PBS -m abe
+#PBS -M rorozco@gatech.edu
+
+
+cd ~/hpc-pa/PA3_framework/
+make
+./tester.sh
